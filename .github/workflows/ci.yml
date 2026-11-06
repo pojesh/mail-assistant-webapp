@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the server repo (for the API contract)
+        uses: actions/checkout@v4
+        with:
+          repository: pojesh/mail-assistant-server
+          path: mail-assistant-server
+          token: ${{ secrets.SERVER_REPO_TOKEN || github.token }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Types
+        run: pnpm typecheck
+      - name: Contract check (generated API types match the server's openapi.json)
+        env:
+          OPENAPI_SOURCE: mail-assistant-server/openapi.json
+        run: |
+          pnpm gen:api
+          git diff --exit-code src/lib/api/schema.d.ts openapi.json
+      - name: Build
+        env:
+          API_URL: http://localhost:8000
+        run: pnpm build
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end and accessibility tests
+        run: pnpm test:e2e
+      - name: Upload the Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
