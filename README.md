@@ -110,6 +110,14 @@ approving an edited draft, undoing an automatic event, chat streaming with citat
 shortcuts, the phone layout (Pixel 7), and an axe WCAG 2 A/AA scan of the main pages (fails on
 serious or critical issues).
 
+## Evaluation page
+
+`/eval` (no sign-in) shows the latest scenario evaluation from the server repo: quality targets,
+latency, and every case with details (chat answers, tools used, retrieval and judged claims). It
+reads `../mail-assistant-server/tests/scenarios/results/latest.json` on each request; set
+`EVAL_RESULTS_PATH` to read another file. Produce results with `uv run pytest tests/scenarios`
+in the server folder.
+
 ## Deployment
 
 Cloud Run service `web`, continuously deployed from `main` with the `Dockerfile` (standalone
